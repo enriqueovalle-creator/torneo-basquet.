@@ -1,0 +1,83 @@
+body {
+    background-color: #000;
+    color: white;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    padding-top: 50px;
+}
+
+.container {
+    width: 90%;
+    max-width: 1000px;
+    background-color: #1a1a1a;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #333;
+}
+
+.header-app {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.logo {
+    width: 60px; /* Tamaño ajustable para tu logo 8M */
+}
+
+.admin-panel {
+    background-color: #262626;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+
+.inputs-row, .add-team-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+input {
+    background-color: #333;
+    border: 1px solid #444;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    flex: 1;
+}
+
+.btn-primary {
+    background-color: #3c045f; /* Tu color morado */
+    color: #00ff00; /* Texto verde como en tu captura */
+    font-weight: bold;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.btn-primary:hover {
+    filter: brightness(1.2);
+}
+
+.tabla-posiciones {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #111;
+}
+
+th {
+    background-color: #222;
+    padding: 15px;
+    border: 1px solid #333;
+    color: #aaa;
+}
+
+td {
+    padding: 12px;
+    text-align: center;
+    border: 1px solid #222;
+}

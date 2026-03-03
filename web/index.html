@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración del Administrador - Mi Escuela</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <header class="header-app">
+            <img src="assets/logo_8M.png" alt="Logo" class="logo">
+            <h2>Configuración del Administrador</h2>
+        </header>
+
+        <div class="admin-panel">
+            <div class="inputs-row">
+                <input type="number" id="ptsGanar" placeholder="Pts por ganar (ej. 2)">
+                <input type="number" id="ptsPerder" placeholder="Pts por perder (ej. 1)">
+                <input type="number" id="numVueltas" placeholder="Número de vueltas">
+            </div>
+            
+            <div class="add-team-row">
+                <input type="text" id="nombreEquipo" placeholder="Nombre del equipo">
+                <button id="btnAgregar" class="btn-primary">+ Agregar Equipo</button>
+            </div>
+        </div>
+
+        <table class="tabla-posiciones">
+            <thead>
+                <tr>
+                    <th>Pos</th>
+                    <th>EQUIPO</th>
+                    <th>PJ</th>
+                    <th>PG</th>
+                    <th>PP</th>
+                    <th>FAV</th>
+                    <th>CONT</th>
+                    <th>DIF</th>
+                    <th>PTS</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoTabla">
+                </tbody>
+        </table>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
