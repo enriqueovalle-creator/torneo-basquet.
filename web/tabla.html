@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Tabla de Posiciones</title>
+    <style>
+        body { font-family: sans-serif; background: #121212; color: white; padding: 20px; }
+        .nav { display: flex; gap: 10px; margin-bottom: 25px; }
+        .nav a { flex: 1; text-align: center; padding: 15px; background: #222; color: #aaa; text-decoration: none; border-radius: 8px; }
+        .nav a.active { background: #28a745; color: white; }
+        table { width: 100%; border-collapse: collapse; background: #1e1e1e; border-radius: 10px; overflow: hidden; }
+        th { background: #333; color: #00ff00; padding: 15px; font-size: 12px; }
+        td { padding: 15px; text-align: center; border-bottom: 1px solid #222; }
+        .equipo-nombre { text-align: left; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <a href="index.html">ADMINISTRACIÓN</a>
+        <a href="tabla.html" class="active">TABLA DE POSICIONES</a>
+        <a href="roles.html">ROLES DE JUEGO</a>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>POS</th>
+                <th style="text-align:left">EQUIPO</th>
+                <th>PJ</th>
+                <th>PG</th>
+                <th>PP</th>
+                <th>PF</th>
+                <th>PC</th>
+                <th>DIF</th>
+                <th>PTS</th>
+            </tr>
+        </thead>
+        <tbody id="cuerpo-tabla"></tbody>
+    </table>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
+
+        const firebaseConfig = { databaseURL: "https://torneo-basquet-default-rtdb.firebaseio.com" };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        onValue(ref(db, 'asientos/equipos'), (snap) => {
+            const body = document.getElementById('cuerpo-tabla');
+            body.innerHTML = "";
+            const data = snap.val();
+            if(!data) return;
+
+            const lista = Object.values(data).sort((a,b) => b.pts - a.pts);
+            
+            lista.forEach((e, i) => {
+                const dif = (e.pf || 0) - (e.pc || 0);
+                body.innerHTML += `
+                    <tr>
+                        <td>${i+1}</td>
+                        <td class="equipo-nombre">${e.nombre}</td>
+                        <td>${(e.pg||0)+(e.pp||0)}</td>
+                        <td>${e.pg||0}</td>
+                        <td>${e.pp||0}</td>
+                        <td>${e.pf||0}</td>
+                        <td>${e.pc||0}</td>
+                        <td style="color:${dif >= 0 ? '#00ff00':'#ff4444'}">${dif}</td>
+                        <td style="font-weight:bold; color:#00ff00">${e.pts||0}</td>
+                    </tr>`;
+            });
+        });
+    </script>
+</body>
+</html>

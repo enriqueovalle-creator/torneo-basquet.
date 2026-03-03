@@ -3,49 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Configuración del Administrador - Mi Escuela</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Torneo Presi - Admin</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        /* DISEÑO PARA CELULAR */
+        body { background-color: #121212; color: white; font-family: sans-serif; margin: 0; padding: 15px; }
+        
+        /* MENÚ DE NAVEGACIÓN */
+        .nav { display: flex; gap: 8px; margin-bottom: 20px; }
+        .nav a { 
+            flex: 1; text-align: center; padding: 15px 5px; 
+            background: #333; color: white; text-decoration: none; 
+            border-radius: 8px; font-weight: bold; font-size: 14px;
+        }
+        .nav a.active { background: #007bff; }
+
+        /* TARJETAS DE CONTROL */
+        .card { background: #1e1e1e; padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 15px; }
+        h3 { margin: 0 0 15px 0; font-size: 18px; color: #00ff00; }
+        
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        input { 
+            width: 100%; padding: 12px; background: #2a2a2a; 
+            border: 1px solid #444; color: white; border-radius: 8px; 
+            box-sizing: border-box; font-size: 16px;
+        }
+
+        /* BOTÓN AGREGAR */
+        .btn-add { 
+            width: 100%; padding: 15px; background: #4b0082; 
+            color: #00ff00; border: none; border-radius: 8px; 
+            font-weight: bold; font-size: 16px; cursor: pointer;
+        }
+
+        /* TABLA RESPONSIVA */
+        .table-container { overflow-x: auto; background: #111; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; min-width: 500px; }
+        th { background: #222; color: #888; padding: 12px; font-size: 12px; text-align: center; }
+        td { padding: 12px; border: 1px solid #222; text-align: center; font-size: 14px; }
+    </style>
 </head>
 <body>
 
-    <div class="container">
-        <header class="header-app">
-            <img src="assets/logo_8M.png" alt="Logo" class="logo">
-            <h2>Configuración del Administrador</h2>
-        </header>
+    <div class="nav">
+        <a href="index.html" class="active">ADMIN</a>
+        <a href="tabla.html">TABLA</a>
+        <a href="roles.html">ROLES</a>
+    </div>
 
-        <div class="admin-panel">
-            <div class="inputs-row">
-                <input type="number" id="ptsGanar" placeholder="Pts por ganar (ej. 2)">
-                <input type="number" id="ptsPerder" placeholder="Pts por perder (ej. 1)">
-                <input type="number" id="numVueltas" placeholder="Número de vueltas">
-            </div>
-            
-            <div class="add-team-row">
-                <input type="text" id="nombreEquipo" placeholder="Nombre del equipo">
-                <button id="btnAgregar" class="btn-primary">+ Agregar Equipo</button>
-            </div>
+    <div class="card">
+        <h3>Configuración</h3>
+        <div class="grid">
+            <div><label style="font-size:10px; color:#666">Pts Ganar</label><input type="number" id="ptsG" value="3"></div>
+            <div><label style="font-size:10px; color:#666">Pts Perder</label><input type="number" id="ptsP" value="0"></div>
         </div>
+        
+        <h3>Nuevo Equipo</h3>
+        <input type="text" id="nombreEquipo" placeholder="Nombre (Ej: Lobas)" style="margin-bottom:10px">
+        <button class="btn-add" onclick="agregarEquipo()">+ AGREGAR EQUIPO</button>
+    </div>
 
-        <table class="tabla-posiciones">
+    <div class="table-container">
+        <table>
             <thead>
                 <tr>
-                    <th>Pos</th>
+                    <th>POS</th>
                     <th>EQUIPO</th>
                     <th>PJ</th>
                     <th>PG</th>
-                    <th>PP</th>
-                    <th>FAV</th>
-                    <th>CONT</th>
-                    <th>DIF</th>
                     <th>PTS</th>
                 </tr>
             </thead>
-            <tbody id="cuerpoTabla">
+            <tbody id="lista-body">
                 </tbody>
         </table>
     </div>
 
-    <script src="script.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
+
+        const firebaseConfig = { databaseURL: "https://torneo-basquet-default-rtdb.firebaseio.com" };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const tId = "asientos";
+
+        // AGREGAR EQUIPO
+        window.agregarEquipo = function() {
+            const nom = document.getElementById('nombreEquipo').value.trim();
+            if(!nom) return alert("Escribe un nombre");
+
+            set(ref(db, tId + '/equipos/' + nom), {
+                nombre: nom, pj: 0, pg: 0, pp: 0, pts: 0
+            }).then(() => {
+                document.getElementById('nombreEquipo').value = "";
+            });
+        };
+
+        // MOSTRAR EQUIPOS
+        onValue(ref(db, tId + '/equipos'), (snap) => {
+            const body = document.getElementById('lista-body');
+            body.innerHTML = "";
+            const data = snap.val();
+            if(data){
+                let i = 1;
+                Object.keys(data).forEach(k => {
+                    const e = data[k];
+                    body.innerHTML += `<tr>
+                        <td>${i++}</td>
+                        <td style="text-align:left">${e.nombre}</td>
+                        <td>${e.pj}</td>
+                        <td>${e.pg}</td>
+                        <td style="color:#00ff00; font-weight:bold">${e.pts}</td>
+                    </tr>`;
+                });
+            }
+        });
+    </script>
 </body>
 </html>

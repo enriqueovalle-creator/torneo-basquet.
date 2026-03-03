@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roles de Juego - Jornadas</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; padding: 20px; margin: 0; }
+        .nav { display: flex; gap: 10px; margin-bottom: 25px; }
+        .nav a { flex: 1; text-align: center; padding: 15px; background: #222; color: #aaa; text-decoration: none; border-radius: 8px; font-weight: bold; }
+        .nav a.active { background: #007bff; color: white; }
+        
+        .jornada-titulo { background: #333; padding: 10px 20px; border-radius: 8px; margin: 30px 0 15px 0; color: #00ff00; font-weight: bold; border-left: 5px solid #00ff00; }
+        .partido-card { background: #1e1e1e; padding: 20px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #333; }
+        
+        .marcador-flex { display: flex; justify-content: space-between; align-items: center; gap: 15px; }
+        .equipo-nombre { flex: 1; font-weight: bold; font-size: 14px; }
+        .vs-label { color: #ff9800; font-size: 12px; font-weight: bold; }
+        
+        input { width: 55px; padding: 10px; background: #2a2a2a; border: 1px solid #444; color: #00ff00; text-align: center; border-radius: 8px; font-weight: bold; font-size: 16px; }
+        .btn-guardar { background: #28a745; color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; margin-top: 15px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-guardar:hover { background: #218838; }
+        .estado { font-size: 11px; margin-top: 10px; text-align: center; color: #888; }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <a href="index.html">ADMINISTRACIÓN</a>
+        <a href="tabla.html">TABLA</a>
+        <a href="roles.html" class="active">ROLES</a>
+    </div>
+
+    <div id="contenedor-jornadas">Cargando jornadas...</div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+        import { getDatabase, ref, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
+
+        const firebaseConfig = { databaseURL: "https://torneo-basquet-default-rtdb.firebaseio.com" };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const torneoId = "asientos";
+
+        onValue(ref(db, `${torneoId}/jornadas`), async (snap) => {
+            const cont = document.getElementById('contenedor-jornadas');
+            cont.innerHTML = "";
+            const juegos = snap.val();
+            if(!juegos) return cont.innerHTML = "No hay roles generados.";
+
+            // Obtenemos los equipos para saber cuántos juegos hay por jornada
+            const snapE = await get(ref(db, `${torneoId}/equipos`));
+            const numEquipos = Object.keys(snapE.val() || {}).length;
+            const juegosPorJornada = Math.floor(numEquipos / 2);
+
+            juegos.forEach((j, i) => {
+                // Título de Jornada cada N juegos
+                if (i % juegosPorJornada === 0) {
+                    cont.innerHTML += `<div class="jornada-titulo">JORNADA ${Math.floor(i/juegosPorJornada) + 1}</div>`;
+                }
+
+                cont.innerHTML += `
+                    <div class="partido-card">
+                        <div class="marcador-flex">
+                            <div class="equipo-nombre" style="text-align:right">${j.local}</div>
+                            <input type="number" id="l-${i}" value="${j.sl || 0}">
+                            <div class="vs-label">VS</div>
+                            <input type="number" id="v-${i}" value="${j.sv || 0}">
+                            <div class="equipo-nombre">${j.visita}</div>
+                        </div>
+                        <button class="btn-guardar" onclick="finalizarPartido(${i}, '${j.local}', '${j.visita}')">
+                            ${j.jugado ? 'ACTUALIZAR RESULTADO' : 'FINALIZAR PARTIDO'}
+                        </button>
+                        <div class="estado">${j.jugado ? '✅ Partido Jugado' : '⏳ Pendiente'}</div>
+                    </div>`;
+            });
+        });
+
+        window.finalizarPartido = async (idx, local, visita) => {
+            const sl = parseInt(document.getElementById(`l-${idx}`).value) || 0;
+            const sv = parseInt(document.getElementById(`v-${idx}`).value) || 0;
+
+            // 1. Guardar el marcador del partido
+            await update(ref(db, `${torneoId}/jornadas/${idx}`), { sl, sv, jugado: true });
+
+            // 2. Recalcular estadísticas de los dos equipos involucrados
+            await recalcularEquipo(local);
+            await recalcularEquipo(visita);
+            
+            alert("¡Marcador guardado! La tabla se ha actualizado.");
+        };
+
+        async function recalcularEquipo(nombre) {
+            const snapJ = await get(ref(db, `${torneoId}/jornadas`));
+            const jornadas = snapJ.val() || [];
+            const snapR = await get(ref(db, `${torneoId}/reglas`));
+            const reglas = snapR.val() || { ganar: 2, perder: 1 };
+
+            let pg = 0, pp = 0, pf = 0, pc = 0;
+
+            jornadas.forEach(j => {
+                if(j.jugado) {
+                    if(j.local === nombre) {
+                        pf += j.sl; pc += j.sv;
+                        if(j.sl > j.sv) pg++; else if(j.sl < j.sv) pp++;
+                    }
+                    if(j.visita === nombre) {
+                        pf += j.sv; pc += j.sl;
+                        if(j.sv > j.sl) pg++; else if(j.sv < j.sl) pp++;
+                    }
+                }
+            });
+
+            // Cálculo de Puntos basado en tus reglas (Admin)
+            const totalPts = (pg * reglas.ganar) + (pp * reglas.perder);
+
+            await update(ref(db, `${torneoId}/equipos/${nombre}`), {
+                pg, pp, pf, pc, dif: (pf - pc), pts: totalPts
+            });
+        }
+    </script>
+</body>
+</html>
